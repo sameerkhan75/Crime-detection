@@ -6,4 +6,5 @@ __all__ = [
     "features",
     "classifier",
     "summarizer",
+    "prototype_store",
 ]

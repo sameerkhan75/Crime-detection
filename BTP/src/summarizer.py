@@ -68,6 +68,14 @@ class VideoSummarizer:
             return "Theft indicators: isolated or brief bursts of motion while the scene stays sparse."
         if label == "assault":
             return "Assault indicators: energetic bursts with multiple people involved."
+        if label == "explosion":
+            return (
+                "Explosion indicators: violent motion spikes with volatile movement despite little human presence."
+            )
+        if label == "road accident":
+            return (
+                "Road-accident indicators: clusters of moving objects and directional bursts on an otherwise open scene."
+            )
 
         if bursts < 0.2 and calm > 0.7 and movers < 0.3:
             return "Normal activity indicators: calm frames dominate and only light movement occurs."

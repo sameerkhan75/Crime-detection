@@ -9,6 +9,7 @@ from typing import Any
 from src.classifier import HeuristicCrimeClassifier
 from src.features import VideoFeatureExtractor
 from src.file_utils import find_video_file
+from src.prototype_store import PrototypeStore
 from src.summarizer import VideoSummarizer
 
 
@@ -36,6 +37,17 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Optional path to dump raw statistics as JSON.",
     )
+    parser.add_argument(
+        "--train-label",
+        choices=HeuristicCrimeClassifier.classes,
+        help="Store the analyzed video as a prototype for the given label.",
+    )
+    parser.add_argument(
+        "--prototype-store",
+        type=Path,
+        default=Path("trained_samples.json"),
+        help="Path to the prototype memory JSON file.",
+    )
     return parser.parse_args()
 
 
@@ -58,8 +70,9 @@ def main() -> None:
     extractor = VideoFeatureExtractor(sample_rate=args.sample_rate, max_samples=args.max_frames)
     features, frame_stats, metadata = extractor.extract(video_path)
 
-    classifier = HeuristicCrimeClassifier()
-    classification = classifier.classify(features)
+    prototype_store = PrototypeStore(args.prototype_store)
+    classifier = HeuristicCrimeClassifier(prototypes=list(prototype_store))
+    classification = classifier.classify(features, video_path=video_path)
 
     summarizer = VideoSummarizer()
     summary = summarizer.summarize(classification.label, features, frame_stats)
@@ -79,6 +92,10 @@ def main() -> None:
         args.dump_stats.parent.mkdir(parents=True, exist_ok=True)
         args.dump_stats.write_text(json.dumps(payload, indent=2))
         print(f"\nDetailed statistics written to {args.dump_stats}")
+
+    if args.train_label:
+        prototype_store.add_sample(args.train_label, features, video_path)
+        print(f"Stored prototype for label '{args.train_label}' in {args.prototype_store}")
 
 
 if __name__ == "__main__":
